@@ -15,3 +15,7 @@ Pillow   # for image handling
 
 # Optional LLM Integration
 ollama
+
+# API Dependencies
+fastapi
+uvicorn

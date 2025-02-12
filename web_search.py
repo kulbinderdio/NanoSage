@@ -1,10 +1,16 @@
 import os
 import asyncio
+import time
 from urllib.parse import urlparse
 import aiohttp
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
+from duckduckgo_search.exceptions import DuckDuckGoSearchException
 import fitz  # PyMuPDF
+
+# Constants for retry logic
+MAX_RETRIES = 3
+RETRY_DELAY = 5  # seconds
 
 def sanitize_filename(filename):
     """Sanitize a filename by allowing only alphanumerics, dot, underscore, and dash."""
@@ -47,27 +53,40 @@ async def download_page(session, url, headers, timeout, file_path):
 
 async def download_webpages_ddg(keyword, limit=5, output_dir='downloaded_webpages'):
     """
-    Perform a DuckDuckGo text search and download pages asynchronously.
+    Perform a DuckDuckGo text search with retry logic and download pages asynchronously.
     Returns a list of dicts with 'url', 'file_path', and optionally 'content_type'.
     """
     # Sanitize the output directory
     output_dir = sanitize_path(output_dir)
     os.makedirs(output_dir, exist_ok=True)
-    
+
     results_info = []
     if not keyword.strip():
         print("[WARN] Empty keyword provided to DuckDuckGo search; skipping search.")
         return []
-    
-    with DDGS() as ddgs:
-        results = ddgs.text(keyword, max_results=limit)
+
+    # Implement retry logic for DuckDuckGo search
+    retry_count = 0
+    while retry_count < MAX_RETRIES:
+        try:
+            with DDGS() as ddgs:
+                results = ddgs.text(keyword, max_results=limit)
+                # If we get here, the search was successful
+                break
+        except DuckDuckGoSearchException as e:
+            retry_count += 1
+            if retry_count == MAX_RETRIES:
+                print(f"[ERROR] Failed to search DuckDuckGo after {MAX_RETRIES} attempts: {e}")
+                return []
+            print(f"[WARN] DuckDuckGo search failed (attempt {retry_count}/{MAX_RETRIES}). Retrying in {RETRY_DELAY} seconds...")
+            time.sleep(RETRY_DELAY)
     if not results:
         print(f"[WARN] No results found for '{keyword}'.")
         return []
-    
+
     headers = {'User-Agent': 'Mozilla/5.0'}
     timeout = aiohttp.ClientTimeout(total=10)
-    
+
     async with aiohttp.ClientSession(timeout=timeout) as session:
         tasks = []
         for idx, result in enumerate(results):
