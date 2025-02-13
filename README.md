@@ -1,4 +1,4 @@
-# NanoSage 🧙: Advanced Recursive Search & Report Generation  
+# NanoSage 🧙: Advanced Recursive Search & Report Generation
 
 Deep Research assistant that runs on your laptop, using tiny models. - all open source!
 
@@ -16,16 +16,16 @@ Where the table of content is basically its search graph. 🧙
 
 ## Example Report
 
-You can find an example report in the following link:  
+You can find an example report in the following link:
 [example report output for query: "Create a structure bouldering gym workout to push my climbing from v4 to v6"](https://github.com/masterFoad/NanoSage/blob/main/example_report.md)
 
 ---
 
-## Quick Start Guide  
+## Quick Start Guide
 
 ### 1. Install Dependencies
 
-1. Ensure **Python 3.8+** is installed.  
+1. Ensure **Python 3.8+** is installed.
 2. Install required packages:
 
 ```bash
@@ -151,6 +151,54 @@ This uses **Gemma 2B** to generate LLM-based summaries and the final report.
 
 ---
 
+### 8. Docker Support
+
+NanoSage provides Docker support for both the API and web interface. This allows you to run the system in containers without installing dependencies directly on your machine.
+
+#### Prerequisites
+
+1. Install [Docker](https://docs.docker.com/get-docker/)
+2. Install [Docker Compose](https://docs.docker.com/compose/install/)
+3. Ensure Ollama is running on your host machine (required for LLM support)
+
+#### Building and Running with Docker
+
+1. **Build and start the containers**:
+```bash
+docker compose up --build
+```
+
+This command will:
+- Build the API container (port 8000)
+- Build the web interface container (port 5000)
+- Mount the results directory for persistent storage
+- Configure communication with your local Ollama instance
+
+2. **Access the services**:
+- Web Interface: http://localhost:5000
+- API Endpoint: http://localhost:8000
+
+3. **Stop the containers**:
+```bash
+docker compose down
+```
+
+#### Important Notes
+
+- The containers expect Ollama to be running on your host machine
+- Results are stored in the `./results` directory which is mounted as a volume
+- Both services use the same results directory for seamless integration
+- The API container automatically downloads required ML models during build
+
+#### Troubleshooting Docker Setup
+
+- **Ollama Connection Issues**: Ensure Ollama is running on your host machine (`ollama list`)
+- **Port Conflicts**: Make sure ports 5000 and 8000 are available
+- **Permission Issues**: The results directory is created with proper permissions during build
+- **Build Failures**: Try rebuilding with `docker compose build --no-cache`
+
+---
+
 ## Detailed Design: NanoSage Architecture
 
 ### 1. Core Input Parameters
@@ -172,11 +220,11 @@ This uses **Gemma 2B** to generate LLM-based summaries and the final report.
 
 ### 2. Configuration & Session Setup
 
-1. **Configuration**:  
+1. **Configuration**:
    `load_config(config_path)` to read YAML settings.
    - **`min_relevance`**: cutoff for subquery branching.
 
-2. **Session Initialization**:  
+2. **Session Initialization**:
    `SearchSession.__init__()` sets:
    - A unique `query_id` & `base_result_dir`.
    - Enhanced query via `chain_of_thought_query_enhancement()`.
@@ -186,20 +234,20 @@ This uses **Gemma 2B** to generate LLM-based summaries and the final report.
 
 ### 3. Recursive Web Search & TOC Tracking
 
-1. **Subquery Generation**:  
+1. **Subquery Generation**:
    - The enhanced query is split with `split_query()`.
-2. **Relevance Filtering**:  
-   - For each subquery, compare embeddings with the main query (via `late_interaction_score()`).  
+2. **Relevance Filtering**:
+   - For each subquery, compare embeddings with the main query (via `late_interaction_score()`).
    - If `< min_relevance`, skip to avoid rabbit holes.
-3. **TOCNode Creation**:  
+3. **TOCNode Creation**:
    - Each subquery → `TOCNode`, storing the text, summary, relevance, etc.
-4. **Web Data**:  
-   - If relevant:  
-     - `download_webpages_ddg()` to fetch results.  
-     - `parse_html_to_text()` and embed them.  
-     - Summarize snippets (`summarize_text()`).  
+4. **Web Data**:
+   - If relevant:
+     - `download_webpages_ddg()` to fetch results.
+     - `parse_html_to_text()` and embed them.
+     - Summarize snippets (`summarize_text()`).
    - If `current_depth < max_depth`, optionally **expand** new sub-subqueries (chain-of-thought on the current subquery).
-5. **Hierarchy**:  
+5. **Hierarchy**:
    - All subqueries & expansions form a tree of TOC nodes for the final report.
 
 ### 4. Local Retrieval & Summaries
@@ -270,12 +318,12 @@ main.py:
 ```
 
 
-If you found **NanoSage** useful for your research or project - or saved you 1 minute of googling, please consider citing it:  
+If you found **NanoSage** useful for your research or project - or saved you 1 minute of googling, please consider citing it:
 
-**BibTeX Citation:**  
+**BibTeX Citation:**
 ```bibtex
 @misc{NanoSage,
-  author = {Foad Abo Dahood}, 
+  author = {Foad Abo Dahood},
   title = {NanoSage: A Recursive, Relevance-Driven Search and RAG Pipeline},
   year = {2025},
   howpublished = {\url{https://github.com/masterFoad/NanoSage}},
@@ -283,5 +331,5 @@ If you found **NanoSage** useful for your research or project - or saved you 1 m
 }
 ```
 
-**APA Citation:**  
-Foad, Abo Dahood. (2025). *NanoSage: A Recursive, Relevance-Driven Search and RAG Pipeline*. Retrieved from [https://github.com/masterFoad/NanoSage](https://github.com/masterFoad/NanoSage) 
+**APA Citation:**
+Foad, Abo Dahood. (2025). *NanoSage: A Recursive, Relevance-Driven Search and RAG Pipeline*. Retrieved from [https://github.com/masterFoad/NanoSage](https://github.com/masterFoad/NanoSage)
