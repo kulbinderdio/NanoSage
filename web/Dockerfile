@@ -1,11 +1,5 @@
 FROM python:3.8-slim
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # Set working directory
 WORKDIR /app
 
@@ -18,9 +12,6 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download the model
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
-
 # Copy application code
 COPY . .
 
@@ -28,12 +19,9 @@ COPY . .
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Expose port for API
+# Expose port for web interface
 ENTRYPOINT ["docker-entrypoint.sh"]
-EXPOSE 8000
+EXPOSE 5000
 
-# Environment variable for Ollama host
-ENV OLLAMA_HOST=http://host.docker.internal:11434
-
-# Run the API server
-CMD ["python", "api.py"]
+# Run the web server
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "300", "--workers", "4", "--threads", "2", "app:app"]

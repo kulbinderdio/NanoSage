@@ -1,0 +1,6 @@
+flask
+flask-cors
+markdown
+python-frontmatter
+requests
+gunicorn

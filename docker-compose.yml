@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  api:
+    container_name: nanosage_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./results:/app/results
+
+  web:
+    container_name: nanosage_web
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - api
+    volumes:
+      - ./results:/app/results
